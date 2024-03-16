@@ -408,7 +408,7 @@ extern int originwindow(Image *, Point, Point);
  */
 extern Point Pt(int, int);
 
-extern Rectangle Rect(int, int, int, int);
+extern Rectangle Rect(int x, int y, int bx, int by);
 
 extern Rectangle Rpt(Point, Point);
 

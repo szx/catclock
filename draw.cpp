@@ -21,21 +21,75 @@ int initdraw(void (*error)(Display *, char *), char *fontname, char *label) {
     assert(error == nullptr);
     assert(fontname == nullptr);
     port_create_window(label);
-    display = new Display {
-        ._isnewdisplay = 1
+    display = new Display{
+            ._isnewdisplay = 1
+    };
+    screen = new Image{
+            .display = display,
+            .id = 0,
+            .r = Rect(0, 0, port_window_width(), port_window_height()),
+            .clipr = Rect(0, 0, port_window_width(), port_window_height()),
+            .depth = 32,
+            .chan = RGBA32,
+            .repl = 0,
+            .screen = nullptr, // TODO: Should not be null?
+            .next = nullptr,
     };
     return 0;
 }
 
+PortColor chan_to_color(ulong chan, ulong col) {
+    switch (chan) {
+        case GREY1: {
+            unsigned char c = (col & 1) * 255;
+            return PortColor{c, c, c, 255};
+        }
+        default:
+            assert(!"TODO: chan_to_color unimpl");
+    }
+    return PortColor{0, 0, 0, 0};
+}
+
 Image *allocimage(Display *d, Rectangle r, ulong chan, int repl, ulong val) {
-    auto *i = new Image{};
-    assert(!"TODO: allocimage");
+    PortImage image = port_create_image(r.max.x - r.min.x, r.max.y - r.min.y);
+    port_image_clear(image, chan_to_color(chan, val));
+    auto *i = new Image{
+            .display = d,
+            .id = image,
+            .r = r,
+            .clipr = r,
+            .depth = 32,
+            .chan = chan,
+            .repl = repl,
+            .screen = nullptr,
+            .next = nullptr,
+    };
     return i;
 }
 
 int loadimage(Image *i, Rectangle r, uchar *data, int ndata) {
-    assert(!"TODO: loadimage");
-    return 0;
+    assert(r.min.x == 0);
+    assert(r.min.y == 0);
+    assert(r.max.x == i->r.max.x);
+    assert(r.max.y == i->r.max.y);
+
+    int width = r.max.x;
+    int height = r.max.y;
+    int size = width * height;
+    auto c = new PortColor[size];
+    int bits = NBITS(i->chan);
+    int packed_colors = sizeof(uchar) * 8 / bits;
+    int row = (r.max.x*bits+packed_colors-1)/packed_colors - (r.min.x*bits)/packed_colors;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int data_index = (y * row) + x / packed_colors;
+            int offset_index = (packed_colors - 1) - (x) % packed_colors;
+            c[y * width + x] = chan_to_color(i->chan, data[data_index] >> offset_index);
+        }
+    }
+
+    port_image_load(i->id, c, size);
+    return ndata;
 }
 
 Rectangle Rect(int x, int y, int bx, int by) {
@@ -93,7 +147,7 @@ Point addpt(Point p1, Point p2) {
 }
 
 Point mulpt(Point p, int scalar) {
-    return Point {
+    return Point{
             .x = p.x * scalar,
             .y = p.y * scalar,
     };

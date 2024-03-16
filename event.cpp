@@ -5,8 +5,15 @@
 #include "event.h"
 #include "port.h"
 
-void einit(ulong) {
-    assert(!"TODO: einit");
+void einit(ulong keys) {
+    switch (keys) {
+        case Emouse:
+            port_init_mouse();
+            break;
+        case Ekeyboard:
+        default:
+            assert(!"TODO: einit unimpl keys");
+    }
 }
 
 
@@ -18,5 +25,5 @@ int ecanmouse() {
 
 Mouse emouse() {
     assert(!"TODO: emouse");
-    return Mouse {};
+    return Mouse{};
 }
