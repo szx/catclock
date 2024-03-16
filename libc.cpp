@@ -6,12 +6,12 @@
 #include "port.h"
 
 int fprint(int, char *, ...) {
-    // TODO: fprintf
+    assert(!"TODO: fprint");
     return 0;
 }
 
 void exits(char *) {
-    // TODO: Exits
+    assert(!"TODO: exits");
 }
 
 double cos(double rad) {

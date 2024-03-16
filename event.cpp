@@ -3,19 +3,20 @@
 //
 
 #include "event.h"
+#include "port.h"
 
 void einit(ulong) {
-    // TODO:
+    assert(!"TODO: einit");
 }
 
 
-int ecanmouse(void) {
-    // TODO:
+int ecanmouse() {
+    assert(!"TODO: ecanmouse");
     return 0;
 }
 
 
-Mouse emouse(void) {
-    // TODO:
+Mouse emouse() {
+    assert(!"TODO: emouse");
     return Mouse {};
 }
