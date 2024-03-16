@@ -15,9 +15,9 @@ void exits(char *) {
 }
 
 double cos(double rad) {
-    return std_cosf64(rad);
+    return port_cosf64(rad);
 }
 
 double sin(double rad) {
-    return std_sinf64(rad);
+    return port_sinf64(rad);
 }

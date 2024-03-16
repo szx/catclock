@@ -4,11 +4,17 @@
 
 #include "port.h"
 #include <cmath>
+#include <SFML/Graphics.hpp>
 
-double std_cosf64(double rad) {
+double port_cosf64(double rad) {
     return cosf64(rad);
 }
 
-double std_sinf64(double rad) {
+double port_sinf64(double rad) {
     return sinf64(rad);
+}
+
+void port_create_window(const char *caption) {
+    auto window = new sf::RenderWindow(sf::VideoMode(800, 600), caption);
+    port_display = PortWindow{.handle = window};
 }

@@ -7,7 +7,14 @@
 
 #include <cassert>
 
-double std_cosf64(double rad);
-double std_sinf64(double rad);
+double port_cosf64(double rad);
+double port_sinf64(double rad);
+
+struct PortWindow {
+    void *handle;
+};
+static PortWindow port_display = {};
+
+void port_create_window(const char* caption);
 
 #endif //CATCLOCK_PORT_H

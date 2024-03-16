@@ -18,8 +18,12 @@ int _cursorfd;
 int _drawdebug;    /* set to 1 to see errors from flushimage */
 
 int initdraw(void (*error)(Display *, char *), char *fontname, char *label) {
-    assert(!"TODO: initdraw");
-    // HIRO
+    assert(error == nullptr);
+    assert(fontname == nullptr);
+    port_create_window(label);
+    display = new Display {
+        ._isnewdisplay = 1
+    };
     return 0;
 }
 
