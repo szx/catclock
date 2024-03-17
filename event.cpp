@@ -18,7 +18,6 @@ void einit(ulong keys) {
 
 
 int ecanmouse() {
-    assert(!"TODO: ecanmouse");
     return 0;
 }
 

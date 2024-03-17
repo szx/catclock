@@ -6,8 +6,10 @@
 #include "libc.h"
 #include "port.h"
 
-void draw(Image *, Rectangle, Image *, Image *, Point) {
-    assert(!"TODO: draw");
+void draw(Image *dst, Rectangle r, Image *src, Image *mask, Point p) {
+    assert(mask == nullptr);
+    port_image_draw(dst->id, PortRect{PortPoint{r.min.x, r.min.y}, PortPoint{r.max.x, r.max.y}}, src->id,
+                    PortPoint{p.x, p.y});
 }
 
 Display *display;
@@ -21,20 +23,13 @@ int initdraw(void (*error)(Display *, char *), char *fontname, char *label) {
     assert(error == nullptr);
     assert(fontname == nullptr);
     port_create_window(label);
+    auto r = Rect(0, 0, port_window_width(), port_window_height());
     display = new Display{
-            ._isnewdisplay = 1
+            .white = allocimage(nullptr, r, GREY1, 0, 0x1),
+            .black = allocimage(nullptr, r, GREY1, 0, 0x0),
+            ._isnewdisplay = 1,
     };
-    screen = new Image{
-            .display = display,
-            .id = 0,
-            .r = Rect(0, 0, port_window_width(), port_window_height()),
-            .clipr = Rect(0, 0, port_window_width(), port_window_height()),
-            .depth = 32,
-            .chan = RGBA32,
-            .repl = 0,
-            .screen = nullptr, // TODO: Should not be null?
-            .next = nullptr,
-    };
+    screen = allocimage(display, r, RGBA32, 0, 0xFFFFFFFF);
     return 0;
 }
 
@@ -43,6 +38,13 @@ PortColor chan_to_color(ulong chan, ulong col) {
         case GREY1: {
             unsigned char c = (col & 1) * 255;
             return PortColor{c, c, c, 255};
+        }
+        case RGBA32: {
+            unsigned char a = (col & 0xFF);
+            unsigned char b = (col & 0xFF00) >> 8;
+            unsigned char g = (col & 0xFF0000) >> 16;
+            unsigned char r = (col & 0xFF000000) >> 24;
+            return PortColor{r, g, b, a};
         }
         default:
             assert(!"TODO: chan_to_color unimpl");
@@ -79,7 +81,7 @@ int loadimage(Image *i, Rectangle r, uchar *data, int ndata) {
     auto c = new PortColor[size];
     int bits = NBITS(i->chan);
     int packed_colors = sizeof(uchar) * 8 / bits;
-    int row = (r.max.x*bits+packed_colors-1)/packed_colors - (r.min.x*bits)/packed_colors;
+    int row = (r.max.x * bits + packed_colors - 1) / packed_colors - (r.min.x * bits) / packed_colors;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             int data_index = (y * row) + x / packed_colors;
@@ -118,20 +120,30 @@ int chartorune(Rune *, char *) {
     return 0;
 }
 
-int sleep(long) {
-    assert(!"TODO: sleep");
+int sleep(long millisecs) {
+    port_sleep(millisecs);
     return 0;
 }
 
-Tm *localtime(long) {
-    assert(!"TODO: localtime");
-    return nullptr;
+static Tm t = {};
+
+Tm *localtime(long clock) {
+    PortTm tm = port_localtime(clock);
+    t = {
+            .sec = tm.sec,
+            .min = tm.min,
+            .hour = tm.hour,
+    };
+    return &t;
 }
 
 Point ZP = {};
 
-int flushimage(Display *, int) {
-    assert(!"TODO: flushimage");
+int flushimage(Display *d, int vis) {
+    if (vis != 0) {
+        port_window_update(screen->id);
+    }
+
     return 0;
 }
 
@@ -153,14 +165,35 @@ Point mulpt(Point p, int scalar) {
     };
 }
 
-void fillpoly(Image *, Point *, int, int, Image *, Point) {
-    assert(!"TODO: fillpoly");
+void fillpoly(Image *dst, Point *p, int np, int wind, Image *src, Point sp) {
+    assert(wind == 1);
+    assert(p[0].x == sp.x && p[0].y == sp.y);
+
+    int size = np;
+    PortPoint points[size];
+    for (int i = 0; i < size; i++) {
+        points[i] = PortPoint{p[i].x, p[i].y};
+    }
+    port_image_fillpoly(dst->id, reinterpret_cast<PortPoint *>(points), size, src->id, PortPoint{sp.x, sp.y});
 }
 
-void border(Image *, Rectangle, int, Image *, Point) {
-    assert(!"TODO: border");
+void border(Image *im, Rectangle r, int _i, Image *color, Point sp) {
+    for (int i = 0; i < _i; i++) { // TODO: Remove after poly() handles thickness correctly.
+        Point points[5];
+        points[0] = Pt(r.min.x + i, r.min.y + i);
+        points[1] = Pt(r.min.x + i, r.max.y - i);
+        points[2] = Pt(r.max.x - i, r.max.y - i);
+        points[3] = Pt(r.max.x - i, r.min.y + i);
+        points[4] = Pt(r.min.x + i, r.min.y + i);
+        poly(im, points, nelem(points), 0, 0, 1, color, Pt(0, 0));
+    }
 }
 
-void poly(Image *, Point *, int, int, int, int, Image *, Point) {
-    assert(!"TODO: poly");
+void poly(Image *dst, Point *p, int np, int end0, int end1, int thick, Image *src, Point sp) {
+    int size = np;
+    PortPoint points[size];
+    for (int i = 0; i < size; i++) {
+        points[i] = PortPoint{p[i].x, p[i].y};
+    }
+    port_image_poly(dst->id, reinterpret_cast<PortPoint *>(points), size, src->id, PortPoint{sp.x, sp.y});
 }

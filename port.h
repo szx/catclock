@@ -26,5 +26,26 @@ struct PortColor {
 };
 void port_image_clear(PortImage image, PortColor color);
 void port_image_load(PortImage image, PortColor *data, int size);
+struct PortPoint {
+    int x;
+    int y;
+};
+struct PortRect {
+    PortPoint min;
+    PortPoint max;
+};
+void port_image_fillpoly(PortImage dst, PortPoint *points, int size, PortImage src, PortPoint srcPoint);
+void port_image_poly(PortImage dst, PortPoint *points, int size, PortImage src, PortPoint srcPoint);
+void port_image_draw(PortImage dst, PortRect r, PortImage src, PortPoint p);
+
+void port_window_update(PortImage image);
+
+void port_sleep(long millisecs);
+struct PortTm {
+    int sec;
+    int min;
+    int hour;
+};
+PortTm port_localtime(long clock);
 
 #endif //CATCLOCK_PORT_H
