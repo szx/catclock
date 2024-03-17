@@ -1,0 +1,24 @@
+#!/usr/bin/python
+
+# SFML doesn't set MWM_FUNC_MOVE for windows without title bar.
+from Xlib.display import Display
+
+found_window = None
+def find_window(window, name):
+    global found_window
+    children = window.query_tree().children
+    for w in children:
+        c = w.get_wm_class();
+        if c is not None and c[1] == name:
+            found_window = w
+            break;
+        find_window(w, name)
+
+display = Display()
+root = display.screen().root
+
+find_window(root, "cat clock")
+window = found_window
+
+window.change_property(display.intern_atom("_MOTIF_WM_HINTS"), display.intern_atom("_MOTIF_WM_HINTS"), 32, [3,4,0,0,0])
+window.query_tree()
